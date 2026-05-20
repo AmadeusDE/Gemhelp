@@ -22,8 +22,6 @@
 !go.mod
 !go.sum
 
-# Unignore all contents of the cmd/ directory
-!cmd/**
-
-# Explicitly ignore makepkg build artifacts
-src/
+# Unignore all .go files
+!src/*.go
+src/gopath/*
