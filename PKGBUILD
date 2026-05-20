@@ -1,6 +1,6 @@
 # Maintainer: Amadeus <email>
 pkgname=gemhelp
-pkgver=r2.92603b6
+pkgver=r3.e97ea15
 pkgrel=1
 pkgdesc="A terminal help command that references Gemini with local man and tldr pages"
 arch=('x86_64' 'aarch64')
@@ -21,7 +21,7 @@ pkgver() {
 build() {
 	cd "$startdir"
 	export GOPATH="$srcdir/gopath"
-	go build -trimpath -o gemhelp -ldflags="-s -w" ./cmd/gemhelp
+	go build -trimpath -o gemhelp -ldflags="-s -w" ./src
 }
 
 package() {

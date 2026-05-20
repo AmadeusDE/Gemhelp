@@ -1,4 +1,4 @@
-module github.com/AmadeusDE/gemhelp
+module github.com/AmadeusDE/Gemhelp
 
 go 1.26.3
 

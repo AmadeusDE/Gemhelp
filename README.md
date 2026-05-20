@@ -16,35 +16,37 @@ Gemhelp is an intelligent terminal helper utility written in Go. It integrates w
 
 ## Installation
 
-### Standard Go Installation
+### Standard Go Installation (Remote)
 To install the latest release directly via Go's package manager:
 ```bash
-go install github.com/AmadeusDE/gemhelp/cmd/gemhelp@latest
+go install github.com/AmadeusDE/Gemhelp/src@latest
 ```
 
-### Pacman Installation
+### From Source (Local)
+If you have cloned the repository:
+```bash
+go install ./src
+```
+
+### Pacman Installation (Arch Linux)
 ```bash
 makepkg -si
 ```
 
 # Build from Source
-If Go is installed on your system, or to bootstrap it automatically:
+If Go is not installed on your system, you can use the bootstrap script:
 ## Clone the repository
 git clone https://github.com/AmadeusDE/gemhelp.git
 cd gemhelp
 
-### Using go build
-`go build -o build/gemhelp ./cmd/gemhelp`
+### Using the build script (downloads Go if not present in PATH)
+`./build.sh`
 
-## Or other options (downloads Go if not present in PATH)
 ### Using Makefile
 `make`
 
 ### Using Justfile
 `just`
-
-### Or just run the build script
-`./build.sh`
 
 ---
 
@@ -88,19 +90,19 @@ ln -s /usr/bin/gemhelp ~/.local/bin/wiki
 wiki pacman
 ```
 
-### Command Correction (`fix`)
-Fix a failed command using Gemini, similar to [thefuck](https://github.com/nvbn/thefuck):
+### Command Correction (`fuck`)
+Correct a failed command using Gemini, similar to [thefuck](https://github.com/nvbn/thefuck):
 ```bash
 # Direct usage — prints corrected command
-gemhelp fix "pacman -s firefox"
-# → sudo pacman -S firefox
+gemhelp fuck "pacman -s firefox"
+# → pacman -S firefox
 
 # With error output piped in
-some_command 2>&1 | gemhelp fix "some_command"
+some_command 2>&1 | gemhelp fuck "some_command"
 ```
 
 ### Shell Integration
-Add one of the following lines to your shell's rc file to get a `fix` function that automatically corrects your last failed command:
+Add one of the following lines to your shell's rc file to get a `fuck()` function that helps you correct your last failed command:
 
 #### Bash (`~/.bashrc`)
 ```bash
@@ -117,13 +119,17 @@ eval "$(gemhelp --init-shell zsh)"
 eval "$(gemhelp --init-shell mksh)"
 ```
 
-After sourcing, simply type `fix` after a failed command:
+After sourcing, simply type `fuck` after a failed command. For safety, the tool will **not** execute the command automatically:
+*   **Zsh**: The corrected command is placed directly into your input buffer.
+*   **Bash**: The corrected command is added to your history; press `[Up]` to review and run it.
+
 ```
 $ pacman -s firefox
 error: ...
-$ fix
+$ fuck
 Fixing: pacman -s firefox
-Running: sudo pacman -S firefox
+# [Zsh: command buffer is now populated with 'pacman -S firefox']
+# [Bash: 'pacman -S firefox' added to history]
 ```
 
 ---
