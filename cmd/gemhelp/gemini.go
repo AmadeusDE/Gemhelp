@@ -97,7 +97,60 @@ func RunGeminiConversation(ctx context.Context, apiKey string, lang string, comm
 		},
 	}
 
-	tools := []*genai.Tool{
+	tools := buildTools()
+
+	config := &genai.GenerateContentConfig{
+		SystemInstruction: systemInst,
+		Tools:             tools,
+	}
+
+	for loop := 0; loop < 5; loop++ {
+		resp, err := callModelWithRetryAndFallback(ctx, client, history, config)
+		if err != nil {
+			return "", err
+		}
+
+		if len(resp.Candidates) == 0 || resp.Candidates[0].Content == nil || len(resp.Candidates[0].Content.Parts) == 0 {
+			return "", fmt.Errorf("received empty response from Gemini")
+		}
+
+		modelContent := resp.Candidates[0].Content
+		history = append(history, modelContent)
+
+		var hasToolCall bool
+		var toolCalls []*genai.FunctionCall
+		for _, part := range modelContent.Parts {
+			if part.FunctionCall != nil {
+				hasToolCall = true
+				toolCalls = append(toolCalls, part.FunctionCall)
+			}
+		}
+
+		if !hasToolCall {
+			var finalResponse strings.Builder
+			for _, part := range modelContent.Parts {
+				if part.Text != "" {
+					finalResponse.WriteString(part.Text)
+				}
+			}
+			return finalResponse.String(), nil
+		}
+
+		// Parallel execution of all tool calls in the turn
+		toolResponseParts := executeToolCallsBatch(ctx, toolCalls, lang)
+
+		// Append the batch of tool response parts back to history
+		history = append(history, &genai.Content{
+			Role:  "user",
+			Parts: toolResponseParts,
+		})
+	}
+
+	return "", fmt.Errorf("reached maximum tool call loops limit (5)")
+}
+
+func buildTools() []*genai.Tool {
+	return []*genai.Tool{
 		{
 			FunctionDeclarations: []*genai.FunctionDeclaration{
 				{
@@ -159,70 +212,26 @@ func RunGeminiConversation(ctx context.Context, apiKey string, lang string, comm
 			},
 		},
 	}
+}
 
-	config := &genai.GenerateContentConfig{
-		SystemInstruction: systemInst,
-		Tools:             tools,
-	}
-
-	for loop := 0; loop < 5; loop++ {
-		resp, err := callModelWithRetryAndFallback(ctx, client, history, config)
-		if err != nil {
-			return "", err
-		}
-
-		if len(resp.Candidates) == 0 || resp.Candidates[0].Content == nil || len(resp.Candidates[0].Content.Parts) == 0 {
-			return "", fmt.Errorf("received empty response from Gemini")
-		}
-
-		modelContent := resp.Candidates[0].Content
-		history = append(history, modelContent)
-
-		var hasToolCall bool
-		var toolCalls []*genai.FunctionCall
-		for _, part := range modelContent.Parts {
-			if part.FunctionCall != nil {
-				hasToolCall = true
-				toolCalls = append(toolCalls, part.FunctionCall)
+func executeToolCallsBatch(ctx context.Context, toolCalls []*genai.FunctionCall, lang string) []*genai.Part {
+	var wg sync.WaitGroup
+	toolResponseParts := make([]*genai.Part, len(toolCalls))
+	for idx, fnCall := range toolCalls {
+		wg.Add(1)
+		go func(i int, fc *genai.FunctionCall) {
+			defer wg.Done()
+			result := executeToolCall(ctx, fc.Name, fc.Args, lang)
+			toolResponseParts[i] = &genai.Part{
+				FunctionResponse: &genai.FunctionResponse{
+					Name:     fc.Name,
+					Response: result,
+				},
 			}
-		}
-
-		if !hasToolCall {
-			var finalResponse strings.Builder
-			for _, part := range modelContent.Parts {
-				if part.Text != "" {
-					finalResponse.WriteString(part.Text)
-				}
-			}
-			return finalResponse.String(), nil
-		}
-
-		// Parallel execution of all tool calls in the turn
-		var wg sync.WaitGroup
-		toolResponseParts := make([]*genai.Part, len(toolCalls))
-		for idx, fnCall := range toolCalls {
-			wg.Add(1)
-			go func(i int, fc *genai.FunctionCall) {
-				defer wg.Done()
-				result := executeToolCall(ctx, fc.Name, fc.Args, lang)
-				toolResponseParts[i] = &genai.Part{
-					FunctionResponse: &genai.FunctionResponse{
-						Name:     fc.Name,
-						Response: result,
-					},
-				}
-			}(idx, fnCall)
-		}
-		wg.Wait()
-
-		// Append the batch of tool response parts back to history
-		history = append(history, &genai.Content{
-			Role:  "user",
-			Parts: toolResponseParts,
-		})
+		}(idx, fnCall)
 	}
-
-	return "", fmt.Errorf("reached maximum tool call loops limit (5)")
+	wg.Wait()
+	return toolResponseParts
 }
 
 func executeToolCall(ctx context.Context, name string, args map[string]interface{}, lang string) map[string]interface{} {

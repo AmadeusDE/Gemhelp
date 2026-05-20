@@ -9,6 +9,7 @@ Gemhelp is an intelligent terminal helper utility written in Go. It integrates w
 *   **Arch Wiki Client**: MediaWiki JSON client that fetches wikitext and strips template clutter.
 *   **Multi-Call Binary Support**: Can act as a drop-in offline alternative to `man` or `tldr` when symlinked or executed as those names.
 *   **Model Fallback & Backoff**: Automatically fallbacks from `gemini-3.5-flash` to `gemini-3.1-flash-lite` and `gemini-2.5-flash` with exponential backoffs on rate limits.
+*   **Command Correction**: `thefuck`-style command correction using Gemini, with shell integration for bash, zsh, and mksh.
 *   **Response Caching**: Instantaneous lookups using SHA-256 hashes of queries.
 
 ---
@@ -18,7 +19,7 @@ Gemhelp is an intelligent terminal helper utility written in Go. It integrates w
 ### Standard Go Installation
 To install the latest release directly via Go's package manager:
 ```bash
-go install github.com/AmadeusDE/gemhelp@latest
+go install github.com/AmadeusDE/gemhelp/cmd/gemhelp@latest
 ```
 
 ### Pacman Installation
@@ -33,7 +34,7 @@ git clone https://github.com/AmadeusDE/gemhelp.git
 cd gemhelp
 
 ### Using go build
-`go build -o build/gemhelp ./src`
+`go build -o build/gemhelp ./cmd/gemhelp`
 
 ## Or other options (downloads Go if not present in PATH)
 ### Using Makefile
@@ -85,6 +86,44 @@ tldr pacman
 # Behave as offline Arch Wiki reader
 ln -s /usr/bin/gemhelp ~/.local/bin/wiki
 wiki pacman
+```
+
+### Command Correction (`fix`)
+Fix a failed command using Gemini, similar to [thefuck](https://github.com/nvbn/thefuck):
+```bash
+# Direct usage — prints corrected command
+gemhelp fix "pacman -s firefox"
+# → sudo pacman -S firefox
+
+# With error output piped in
+some_command 2>&1 | gemhelp fix "some_command"
+```
+
+### Shell Integration
+Add one of the following lines to your shell's rc file to get a `fix` function that automatically corrects your last failed command:
+
+#### Bash (`~/.bashrc`)
+```bash
+eval "$(gemhelp --init-shell bash)"
+```
+
+#### Zsh (`~/.zshrc`)
+```zsh
+eval "$(gemhelp --init-shell zsh)"
+```
+
+#### mksh (`~/.mkshrc`)
+```sh
+eval "$(gemhelp --init-shell mksh)"
+```
+
+After sourcing, simply type `fix` after a failed command:
+```
+$ pacman -s firefox
+error: ...
+$ fix
+Fixing: pacman -s firefox
+Running: sudo pacman -S firefox
 ```
 
 ---

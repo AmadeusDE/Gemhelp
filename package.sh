@@ -46,8 +46,8 @@ for file in go.mod go.sum Makefile Justfile build.sh package.sh LICENSE README.m
 	fi
 done
 
-# Copy src directory
-cp -r src "${SRC_DIR}/"
+# Copy cmd directory
+cp -r cmd "${SRC_DIR}/"
 
 # Compress source directory into build/
 tar -C build -czf "build/gemhelp-${VERSION}.tar.gz" "gemhelp-${VERSION}"

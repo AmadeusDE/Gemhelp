@@ -40,6 +40,11 @@ func main() {
 	wikiSub := flag.Bool("wiki", false, "Search the Arch Wiki directly")
 	flag.BoolVar(wikiSub, "w", false, "Search the Arch Wiki directly (shorthand)")
 
+	fuckSub := flag.Bool("fuck", false, "Correct a failed command using Gemini")
+	flag.BoolVar(fuckSub, "f", false, "Correct a failed command using Gemini (shorthand)")
+
+	initShell := flag.String("init-shell", "", "Print shell integration script (bash, zsh, mksh)")
+
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s [flags] <command> [question...]\n", progName)
 		fmt.Fprintf(os.Stderr, "\nFlags:\n")
@@ -48,13 +53,25 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  %s man <command>          Render parsed man page\n", progName)
 		fmt.Fprintf(os.Stderr, "  %s tldr <command>         Render offline TLDR page\n", progName)
 		fmt.Fprintf(os.Stderr, "  %s wiki <query>           Search/get Arch Wiki page\n", progName)
+		fmt.Fprintf(os.Stderr, "  %s fuck <command>         Correct a failed command\n", progName)
+		fmt.Fprintf(os.Stderr, "\nShell Integration:\n")
+		fmt.Fprintf(os.Stderr, "  eval \"$(%s --init-shell bash)\"   Add to ~/.bashrc\n", progName)
+		fmt.Fprintf(os.Stderr, "  eval \"$(%s --init-shell zsh)\"    Add to ~/.zshrc\n", progName)
+		fmt.Fprintf(os.Stderr, "  eval \"$(%s --init-shell mksh)\"   Add to ~/.mkshrc\n", progName)
 		fmt.Fprintf(os.Stderr, "\nExamples:\n")
 		fmt.Fprintf(os.Stderr, "  gemhelp ls\n")
 		fmt.Fprintf(os.Stderr, "  gemhelp ls how to sort by size\n")
 		fmt.Fprintf(os.Stderr, "  gemhelp --tldr tar\n")
+		fmt.Fprintf(os.Stderr, "  gemhelp fuck \"pacman -s firefox\"\n")
 	}
 
 	flag.Parse()
+
+	// Shell integration script output
+	if *initShell != "" {
+		printShellIntegration(*initShell)
+		return
+	}
 
 	// Clear cache and exit if requested
 	if *clearCacheFlag {
@@ -93,6 +110,13 @@ func main() {
 			}
 			runDirectWiki(strings.Join(args[1:], " "))
 			return
+		case "fuck":
+			if len(args) < 2 {
+				fmt.Println("Error: Missing command. Usage: gemhelp fuck \"<failed command>\"")
+				os.Exit(1)
+			}
+			runFuckMode(ctx, strings.Join(args[1:], " "))
+			return
 		}
 	}
 
@@ -121,6 +145,15 @@ func main() {
 			os.Exit(1)
 		}
 		runDirectWiki(strings.Join(args, " "))
+		return
+	}
+
+	if *fuckSub {
+		if len(args) == 0 {
+			fmt.Println("Error: Missing command for --fuck flag.")
+			os.Exit(1)
+		}
+		runFuckMode(ctx, strings.Join(args, " "))
 		return
 	}
 
@@ -265,4 +298,94 @@ func runDirectWiki(query string) {
 		os.Exit(1)
 	}
 	fmt.Println(FormatMarkdown(page))
+}
+
+func runFuckMode(ctx context.Context, failedCommand string) {
+	cfg, err := LoadConfig()
+	if err != nil || cfg.APIKey == "" {
+		cfg, err = PromptConfig(ctx)
+		if err != nil {
+			fmt.Printf("Setup failed: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
+	// Read error output from stdin if piped
+	errorOutput := readStdinIfPiped()
+
+	fmt.Fprintf(os.Stderr, "Analyzing: %s\n", failedCommand)
+	corrected, explanation, err := RunFuckCommand(ctx, cfg.APIKey, cfg.Language, failedCommand, errorOutput)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Corrected command goes to stdout (for shell capture)
+	fmt.Print(corrected)
+
+	// Explanation goes to stderr (visible but doesn't interfere with capture)
+	if explanation != "" {
+		fmt.Fprintf(os.Stderr, "\n%s\n", FormatMarkdown(explanation))
+	}
+}
+
+func printShellIntegration(shell string) {
+	switch strings.ToLower(shell) {
+	case "bash":
+		fmt.Print(`fuck() {
+    local last_cmd
+    last_cmd=$(fc -ln -1 | sed 's/^\s*//')
+    if [ -z "$last_cmd" ]; then
+        echo "No previous command found." >&2
+        return 1
+    fi
+    echo "Fixing: $last_cmd" >&2
+    local corrected
+    corrected=$(gemhelp fuck "$last_cmd")
+    if [ -n "$corrected" ]; then
+        # In bash, we print it and put it in history.
+        # Ideally we'd put it in the buffer, but that's complex without bind -x.
+        echo -e "\nProposed fix: $corrected" >&2
+        history -s "$corrected"
+        echo "Command added to history. Press [Up] to review/run." >&2
+    fi
+}
+`)
+	case "zsh":
+		fmt.Print(`fuck() {
+    local last_cmd
+    last_cmd=$(fc -ln -1 | sed 's/^\s*//')
+    if [[ -z "$last_cmd" ]]; then
+        echo "No previous command found." >&2
+        return 1
+    fi
+    echo "Fixing: $last_cmd" >&2
+    local corrected
+    corrected=$(gemhelp fuck "$last_cmd")
+    if [[ -n "$corrected" ]]; then
+        # Put it in the editing buffer
+        print -z "$corrected"
+    fi
+}
+`)
+	case "mksh":
+		fmt.Print(`fuck() {
+    typeset last_cmd
+    last_cmd=$(fc -ln -1 | sed 's/^[[:space:]]*//')
+    if [ -z "$last_cmd" ]; then
+        echo "No previous command found." >&2
+        return 1
+    fi
+    echo "Fixing: $last_cmd" >&2
+    typeset corrected
+    corrected=$(gemhelp fuck "$last_cmd")
+    if [ -n "$corrected" ]; then
+        echo -e "\nProposed fix: $corrected" >&2
+    fi
+}
+`)
+	default:
+		fmt.Fprintf(os.Stderr, "Unsupported shell: %s. Supported: bash, zsh, mksh\n", shell)
+		os.Exit(1)
+	}
 }

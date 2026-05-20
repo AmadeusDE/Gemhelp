@@ -38,7 +38,7 @@ fi
 
 mkdir -p build
 echo "Building gemhelp..."
-$GO_BIN build -o build/gemhelp ./src
+$GO_BIN build -o build/gemhelp ./cmd/gemhelp
 
 echo "Creating symlinks for man, tldr, and wiki..."
 (cd build && ln -sf gemhelp man && ln -sf gemhelp tldr && ln -sf gemhelp wiki)

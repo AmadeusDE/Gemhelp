@@ -6,7 +6,7 @@ build:
 	@if command -v go >/dev/null 2>&1; then \
 		echo "Building with system Go..."; \
 		mkdir -p build; \
-		go build -o build/gemhelp ./src; \
+		go build -o build/gemhelp ./cmd/gemhelp; \
 	else \
 		if [ ! -f go/bin/go ]; then \
 			echo "Go not found in PATH. Bootstrapping Go 1.26.3..."; \
@@ -21,23 +21,23 @@ build:
 		fi; \
 		echo "Building with bootstrapped Go..."; \
 		mkdir -p build; \
-		./go/bin/go build -o build/gemhelp ./src; \
+		./go/bin/go build -o build/gemhelp ./cmd/gemhelp; \
 	fi
 	@echo "Creating symlinks for man, tldr, and wiki..."
 	@cd build && ln -sf gemhelp man && ln -sf gemhelp tldr && ln -sf gemhelp wiki
 
 test:
 	@if command -v go >/dev/null 2>&1; then \
-		go test -v ./src; \
+		go test -v ./cmd/gemhelp; \
 	elif [ -f go/bin/go ]; then \
-		./go/bin/go test -v ./src; \
+		./go/bin/go test -v ./cmd/gemhelp; \
 	else \
 		echo "Go not found in PATH or bootstrapped folder. Running build to bootstrap..."; \
 		$(MAKE) build; \
 		if command -v go >/dev/null 2>&1; then \
-			go test -v ./src; \
+			go test -v ./cmd/gemhelp; \
 		else \
-			./go/bin/go test -v ./src; \
+			./go/bin/go test -v ./cmd/gemhelp; \
 		fi \
 	fi
 
@@ -51,7 +51,7 @@ package:
 	@mkdir -p build
 	@echo "Compiling binaries..."
 	@if command -v go >/dev/null 2>&1; then \
-		go build -o build/gemhelp ./src; \
+		go build -o build/gemhelp ./cmd/gemhelp; \
 	else \
 		if [ ! -f go/bin/go ]; then \
 			echo "Go not found in PATH. Bootstrapping Go 1.26.3..."; \
@@ -64,7 +64,7 @@ package:
 			tar -xzf go_bootstrap.tar.gz; \
 			rm go_bootstrap.tar.gz; \
 		fi; \
-		./go/bin/go build -o build/gemhelp ./src; \
+		./go/bin/go build -o build/gemhelp ./cmd/gemhelp; \
 	fi
 	@cd build && ln -sf gemhelp man && ln -sf gemhelp tldr && ln -sf gemhelp wiki
 	@echo "Packaging binaries and source code..."
