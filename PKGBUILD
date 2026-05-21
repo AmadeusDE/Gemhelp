@@ -21,7 +21,7 @@ pkgver() {
 build() {
 	cd "$startdir"
 	export GOPATH="$srcdir/gopath"
-	go build -trimpath -o gemhelp -ldflags="-s -w" ./cmd
+	go build -trimpath -o gemhelp -ldflags="-s -w" ./cmd/gemhelp
 }
 
 package() {

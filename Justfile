@@ -21,12 +21,12 @@ bootstrap:
 build: bootstrap
     @mkdir -p build
     @echo "Building gemhelp..."
-    @{{go}} build -o build/gemhelp ./cmd
+    @{{go}} build -o build/gemhelp ./cmd/gemhelp
     @echo "Creating symlinks for man, tldr, and wiki..."
     @cd build && ln -sf gemhelp man && ln -sf gemhelp tldr && ln -sf gemhelp wiki
 
 test: bootstrap
-    @{{go}} test -v ./cmd
+    @{{go}} test -v ./cmd/gemhelp
 
 package: bootstrap
     @echo "Running shellcheck on shell scripts..."
@@ -50,7 +50,7 @@ package: bootstrap
     @echo "Packaging source code..."
     @mkdir -p build/gemhelp-{{version}}
     @cp go.mod go.sum Makefile Justfile build.sh package.sh LICENSE README.md AGENTS.md PKGBUILD build/gemhelp-{{version}}/
-    @cp -r src build/gemhelp-{{version}}/
+    @cp -r cmd build/gemhelp-{{version}}/
     @tar -C build -czf build/gemhelp-{{version}}.tar.gz gemhelp-{{version}}
     @tar -C build -cf - gemhelp-{{version}} | xz -c > build/gemhelp-{{version}}.tar.xz
     @tar -C build -cf - gemhelp-{{version}} | lzma -c > build/gemhelp-{{version}}.tar.lzma

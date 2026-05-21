@@ -6,7 +6,7 @@ build:
 	@if command -v go >/dev/null 2>&1; then \
 		echo "Building with system Go..."; \
 		mkdir -p build; \
-		go build -o build/gemhelp ./cmd; \
+		go build -o build/gemhelp ./cmd/gemhelp; \
 	else \
 		if [ ! -f go/bin/go ]; then \
 			echo "Go not found in PATH. Bootstrapping Go 1.26.3..."; \
@@ -21,23 +21,23 @@ build:
 		fi; \
 		echo "Building with bootstrapped Go..."; \
 		mkdir -p build; \
-		./go/bin/go build -o build/gemhelp ./cmd; \
+		./go/bin/go build -o build/gemhelp ./cmd/gemhelp; \
 	fi
 	@echo "Creating symlinks for man, tldr, and wiki..."
 	@cd build && ln -sf gemhelp man && ln -sf gemhelp tldr && ln -sf gemhelp wiki
 
 test:
 	@if command -v go >/dev/null 2>&1; then \
-		go test -v ./cmd; \
+		go test -v ./cmd/gemhelp; \
 	elif [ -f go/bin/go ]; then \
-		./go/bin/go test -v ./cmd; \
+		./go/bin/go test -v ./cmd/gemhelp; \
 	else \
 		echo "Go not found in PATH or bootstrapped folder. Running build to bootstrap..."; \
 		$(MAKE) build; \
 		if command -v go >/dev/null 2>&1; then \
-			go test -v ./cmd; \
+			go test -v ./cmd/gemhelp; \
 		else \
-			./go/bin/go test -v ./cmd; \
+			./go/bin/go test -v ./cmd/gemhelp; \
 		fi \
 	fi
 
@@ -51,7 +51,7 @@ package:
 	@mkdir -p build
 	@echo "Compiling binaries..."
 	@if command -v go >/dev/null 2>&1; then \
-		go build -o build/gemhelp ./cmd; \
+		go build -o build/gemhelp ./cmd/gemhelp; \
 	else \
 		if [ ! -f go/bin/go ]; then \
 			echo "Go not found in PATH. Bootstrapping Go 1.26.3..."; \
@@ -64,7 +64,7 @@ package:
 			tar -xzf go_bootstrap.tar.gz; \
 			rm go_bootstrap.tar.gz; \
 		fi; \
-		./go/bin/go build -o build/gemhelp ./cmd; \
+		./go/bin/go build -o build/gemhelp ./cmd/gemhelp; \
 	fi
 	@cd build && ln -sf gemhelp man && ln -sf gemhelp tldr && ln -sf gemhelp wiki
 	@echo "Packaging binaries and source code..."
@@ -80,7 +80,7 @@ package:
 	rm -rf build/gemhelp-bin-v$$VERSION; \
 	mkdir -p build/gemhelp-$$VERSION; \
 	cp go.mod go.sum Makefile Justfile build.sh package.sh LICENSE README.md AGENTS.md PKGBUILD build/gemhelp-$$VERSION/; \
-	cp -r src build/gemhelp-$$VERSION/; \
+	cp -r cmd build/gemhelp-$$VERSION/; \
 	tar -C build -czf build/gemhelp-$$VERSION.tar.gz gemhelp-$$VERSION; \
 	tar -C build -cf - gemhelp-$$VERSION | xz -c > build/gemhelp-$$VERSION.tar.xz; \
 	tar -C build -cf - gemhelp-$$VERSION | lzma -c > build/gemhelp-$$VERSION.tar.lzma; \
