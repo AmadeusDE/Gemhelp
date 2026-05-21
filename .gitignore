@@ -1,27 +1,19 @@
-# Ignore everything by default
-*
+# Ignore everything in the root by default
+/*
 
-# Do not ignore directories (so git traverses them)
-!*/
+# Do not ignore these specific files in the root
+!/.gitignore
+!/Makefile
+!/Justfile
+!/PKGBUILD
+!/LICENSE
+!/README.md
+!/AGENTS.md
+!/CODE_OF_CONDUCT.md
+!/build.sh
+!/package.sh
+!/go.mod
+!/go.sum
 
-# Unignore version-controlled root files
-!.gitignore
-!Makefile
-!Justfile
-!PKGBUILD
-!LICENSE
-!README.md
-!AGENTS.md
-!CODE_OF_CONDUCT.md
-
-# Unignore helper scripts
-!build.sh
-!package.sh
-
-# Unignore Go module manifests
-!go.mod
-!go.sum
-
-# Unignore all contents of the cmd/ directory
-!cmd/
-!cmd/**
+# Do not ignore the cmd directory and its contents
+!/cmd/

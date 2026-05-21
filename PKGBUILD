@@ -1,6 +1,6 @@
 # Maintainer: Amadeus <email>
 pkgname=gemhelp
-pkgver=r4.f94a0ec
+pkgver=r6.3cefba3
 pkgrel=1
 pkgdesc="A terminal help command that references Gemini with local man and tldr pages"
 arch=('x86_64' 'aarch64')
