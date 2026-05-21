@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -76,4 +78,46 @@ func normalizeSpaces(s string) string {
 		}
 	}
 	return strings.Join(result, "\n")
+}
+
+func TestFindManPagePathOverride(t *testing.T) {
+	// Create mock man page directory structure
+	tempDir, err := os.MkdirTemp("", "man-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp man dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	man1Dir := filepath.Join(tempDir, "man1")
+	if err := os.MkdirAll(man1Dir, 0755); err != nil {
+		t.Fatalf("failed to create man1 directory: %v", err)
+	}
+
+	testFile := filepath.Join(man1Dir, "testcmd.1.gz")
+	if err := os.WriteFile(testFile, []byte("mock gzipped content"), 0644); err != nil {
+		t.Fatalf("failed to write mock man page: %v", err)
+	}
+
+	// Set GEMHELP_MAN_DIR to point to our temp directory
+	origManDir := os.Getenv("GEMHELP_MAN_DIR")
+	defer os.Setenv("GEMHELP_MAN_DIR", origManDir)
+	os.Setenv("GEMHELP_MAN_DIR", tempDir)
+
+	// Call FindManPagePath
+	path, exists := FindManPagePath("testcmd")
+	if !exists {
+		t.Errorf("expected FindManPagePath to find the man page using GEMHELP_MAN_DIR, but it didn't")
+	}
+
+	expectedPath := testFile
+	if filepath.Clean(path) != filepath.Clean(expectedPath) {
+		t.Errorf("expected path '%s', got '%s'", expectedPath, path)
+	}
+
+	// Unset GEMHELP_MAN_DIR and ensure it is not found
+	os.Setenv("GEMHELP_MAN_DIR", "")
+	_, existsEmpty := FindManPagePath("testcmd")
+	if existsEmpty {
+		t.Errorf("expected FindManPagePath to NOT find 'testcmd' when GEMHELP_MAN_DIR is unset")
+	}
 }

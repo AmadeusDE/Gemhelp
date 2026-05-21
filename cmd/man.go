@@ -12,11 +12,16 @@ import (
 )
 
 func FindManPagePath(command string) (string, bool) {
+	manDir := os.Getenv("GEMHELP_MAN_DIR")
+	if manDir == "" {
+		manDir = "/usr/share/man"
+	}
+
 	// Standard search sections
 	sections := []string{"1", "8", "6", "2", "3", "4", "5", "7", "1p", "3p"}
 	for _, sec := range sections {
 		for _, ext := range []string{".gz", ""} {
-			path := filepath.Join("/usr/share/man", "man"+sec, command+"."+sec+ext)
+			path := filepath.Join(manDir, "man"+sec, command+"."+sec+ext)
 			if _, err := os.Stat(path); err == nil {
 				return path, true
 			}
@@ -24,7 +29,7 @@ func FindManPagePath(command string) (string, bool) {
 	}
 
 	// Fallback to globbing in case it's in a non-standard subfolder
-	matches, _ := filepath.Glob("/usr/share/man/man*/" + command + ".[1-8]*")
+	matches, _ := filepath.Glob(filepath.Join(manDir, "man*") + "/" + command + ".[1-8]*")
 	if len(matches) > 0 {
 		return matches[0], true
 	}

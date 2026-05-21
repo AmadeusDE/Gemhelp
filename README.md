@@ -138,6 +138,7 @@ Fixing: pacman -s firefox
 *   **Configuration**: `~/.config/gemhelp/config.json` (permissions `0600`).
 *   **TLDR Archive Cache**: `~/.local/share/gemhelp/tldr/`
 *   **Response Cache**: `~/.cache/gemhelp/responses/`
+*   **Man Page Directory Override**: By default, man pages are searched under `/usr/share/man`. You can override this search path by setting the `GEMHELP_MAN_DIR` environment variable.
 
 ---
 
