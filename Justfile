@@ -21,12 +21,12 @@ bootstrap:
 build: bootstrap
     @mkdir -p build
     @echo "Building gemhelp..."
-    @{{go}} build -o build/gemhelp ./src
+    @{{go}} build -o build/gemhelp ./cmd
     @echo "Creating symlinks for man, tldr, and wiki..."
     @cd build && ln -sf gemhelp man && ln -sf gemhelp tldr && ln -sf gemhelp wiki
 
 test: bootstrap
-    @{{go}} test -v ./src
+    @{{go}} test -v ./cmd
 
 package: bootstrap
     @echo "Running shellcheck on shell scripts..."

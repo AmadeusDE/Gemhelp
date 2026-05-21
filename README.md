@@ -19,13 +19,13 @@ Gemhelp is an intelligent terminal helper utility written in Go. It integrates w
 ### Standard Go Installation (Remote)
 To install the latest release directly via Go's package manager:
 ```bash
-go install github.com/AmadeusDE/Gemhelp/src@latest
+go install github.com/AmadeusDE/Gemhelp/cmd@latest
 ```
 
 ### From Source (Local)
 If you have cloned the repository:
 ```bash
-go install ./src
+go install ./cmd
 ```
 
 ### Pacman Installation (Arch Linux)
