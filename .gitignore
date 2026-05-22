@@ -17,3 +17,4 @@
 
 # Do not ignore the cmd directory and its contents
 !/cmd/
+!/packaging/

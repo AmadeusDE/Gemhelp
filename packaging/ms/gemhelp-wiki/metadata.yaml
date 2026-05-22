@@ -1,0 +1,8 @@
+name: gemhelp-wiki
+version: "1.0"
+description: "Wiki command alias for gemhelp"
+dependencies:
+  - gemhelp
+links:
+  generic:
+    @gemhelp/usr/bin/gemhelp: bin/wiki

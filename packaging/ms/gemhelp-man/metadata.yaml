@@ -1,0 +1,8 @@
+name: gemhelp-man
+version: "1.0"
+description: "Man command alias for gemhelp"
+dependencies:
+  - gemhelp
+links:
+  generic:
+    @gemhelp/usr/bin/gemhelp: bin/man

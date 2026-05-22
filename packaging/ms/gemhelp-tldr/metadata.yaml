@@ -1,0 +1,8 @@
+name: gemhelp-tldr
+version: "1.0"
+description: "TLDR command alias for gemhelp"
+dependencies:
+  - gemhelp
+links:
+  generic:
+    @gemhelp/usr/bin/gemhelp: bin/tldr

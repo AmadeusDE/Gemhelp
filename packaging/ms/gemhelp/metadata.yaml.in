@@ -1,0 +1,10 @@
+name: gemhelp
+version: "@VERSION@"
+description: "A terminal help command that references Gemini with local man and tldr pages"
+dependencies:
+  - glibc
+links:
+  versioned:
+    usr/bin/gemhelp: bin/gemhelp-${version}
+  generic:
+    usr/bin/gemhelp: bin/gemhelp

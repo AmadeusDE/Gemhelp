@@ -27,6 +27,7 @@ build() {
 package() {
 	cd "$startdir"
 	install -Dm755 gemhelp "$pkgdir/usr/bin/gemhelp"
+	install -Dm644 gemhelp.1 "$pkgdir/usr/share/man/man1/gemhelp.1"
 	ln -s gemhelp "$pkgdir/usr/bin/tldr"
 	ln -s gemhelp "$pkgdir/usr/bin/wiki"
 }
